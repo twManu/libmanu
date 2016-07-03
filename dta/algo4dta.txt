@@ -1,0 +1,65 @@
+#define SLEEP_MS        40                       //the period of time we sleep in normal case
+#define BLANK_MS        20                       //the padding/latency we add to avoid output buffer empty
+#define CHECK_MS         5                       //check level of output periodically
+
+
+redo:
+m_state = STATE_NORMAL
+m_sleepMS = SLEEP_MS
+m_checkMS = CHECK_MS
+m_padding = 0                //padding size since data late
+normalMS = sleepMS + BLANK_MS   //level=60
+wait_source_amount(sleepMS)
+copy normalMS to output
+while( !stop ) {
+	sleep(m_checkMS)
+	m_fullMS = get_output_fullNess
+	if( 0==m_fullMS ) {
+		printf("running out of playback buffer\n")
+		goto redo
+	}
+	if( m_fullMS-BLANK_MS>=m_checkMS ) continue   //still have time
+	else if( m_fullMS>BLANK_MS ) {                //approaching
+		m_checkMS = m_fullMS - BLANK_MS
+		continue
+	}
+	m_srcMS = get_source_available
+	m_emptyMS = normalMS - m_fullMS
+	toleranceMS = m_emptyMS/10;
+	if( m_srcMS<m_emptyMS-toleranceMS ) {        //data input too late
+		if( !m_padding && m_srcMS>=CHECK_MS ) {                //we have certain data and not in padding stage
+			99:100 mapping m_srcMS to output               //give what we have
+			m_checkMS = m_srcMS
+		} else {
+			m_padding += (normalMS - m_fullMS - m_srcMS)   //fill to normal level
+			copy m_srcMS
+			copy (normalMS - m_fullMS - m_srcMS) of 0s
+			m_checkMS = CHECK_MS
+		}
+		continue
+	} else {                                     //we have data filled to certain level
+		if( m_padding ) {
+			if( m_srcMS - m_padding>m_emptyMS ) {
+			                             //enough data to compensate padding
+				drop m_padding from input
+				m_srcMS -= m_padding
+				m_padding = 0
+			} else {
+				m_padding += CHECK_MS
+				copy CHECK_MS of 0s
+				m_checkMS = CHECK_MS
+				continue
+			}
+		}
+	}
+	//here we should have no compensation requirement
+	if( m_srcMS>m_emptyMS+5 ) {
+		drop m_srcMS -(m_emptyMS+2) data //we have m_emptyMS+2 data
+		101:100 mapping to emptyMS
+	} else if( m_srcMS>m_emptyMS+2 ) {       //2ms data more...should be rare
+		101:100 mapping to emptyMS
+	} else {
+		copy m_srcMS to output
+	}
+	m_checkMS = CHECK_MS
+}

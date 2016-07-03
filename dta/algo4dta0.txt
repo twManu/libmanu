@@ -1,0 +1,75 @@
+#define SLEEP_MS        60                       //the period of time we sleep in normal case
+#define BLANK_MS        60                       //the padding/latency we add to avoid output buffer empty
+#define RED_LEVEL_MS    45                       //the line padding happens
+#define BLUE_LEVEL_MS   140                       //the lone dropping happens
+
+enum {
+	  STATE_NORMAL
+	, STATE_MORE
+	, STATE_LESS
+};
+
+
+m_state = STATE_NORMAL
+m_sleepMS = SLEEP_MS
+m_less = 0
+m_padding = 0
+normalMS = sleepMS + BLANK_MS   //level=60
+wait_source_amount(sleepMS)
+copy normalMS to output
+while( !stop ) {
+	sleep(sleepMS)
+	m_fullMS = get_output_fullNess
+	m_srcMS = get_source_available
+	m_totalMS = m_fullMS+m_srcMS                                 //how much now
+	restart if m_fullMS = 0
+	if( m_padding ) {
+		if( m_srcMS>=m_padding ) {
+			drop first m_padding of source
+			m_srcMS -= m_padding
+			m_totalMS -= m_padding
+			m_padding = 0
+		} else {
+			m_padding = 0                               //not able to compensate previous shortage
+			copy ((SLEEP_MS+BLANK_MS) - m_totalMS) of 0s //fill to normal
+			copy m_srcMS
+			m_sleepMS = SLEEP_MS
+			continue
+		}
+	}
+	//padding resolved
+	if( m_totalMS>RED_LEVEL_MS ) {
+		if( m_totalMS>=BLUE_LEVEL_MS ) {                    //too much data
+			drop m_totalMS - (SLEEP_MS+BLANK_MS)        //fill to normal
+			copy m_srcMS - (m_totalMS - (SLEEP_MS+BLANK_MS))
+			m_sleepMS = SLEEP_MS
+			m_less = 0
+		} else {                                            //reasonable data or too less
+			if( m_totalMS>BLANK_MS ) m_less = 0
+			else {
+				m_less++
+				if( m_less>=LESS_BOUND ) {          //we cannot bear low state long
+					m_less = 0                  //fill to normal
+					m_padding += ((SLEEP_MS+BLANK_MS) - m_totalMS)
+					fill to normal (m_srcMS first)
+					m_sleepMS = SLEEP_MS
+					continue
+				}
+			}
+			copy m_srcMS
+			if( m_totalMS>(BLANK_MS+SLEEP_MS) ) {        //we have more than normal	
+				m_sleepMS = m_totalMS - BLANK_MS
+			} else {
+				if( m_less ) m_sleepMS = (m_totalMS-RED_LEVEL_MS)
+				else m_sleepMS = (m_totalMS-BLANK_MS)
+			}
+		}
+	} else {                                                    //fill to normal
+		m_padding += ((SLEEP_MS+BLANK_MS) - m_totalMS)
+		copy m_srcMS to output
+		copy m_padding of 0s
+		m_sleepMS = SLEEP_MS
+		m_less = 0	
+	}
+
+}
