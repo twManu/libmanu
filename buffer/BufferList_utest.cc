@@ -27,6 +27,7 @@ public:
 TEST_F(BLTest, selfAlloc) {
 	int i;
 	Buffer buffer;
+	Buffer *bufs[2] = { &buffer, NULL };
 	
 	ASSERT_TRUE(NULL!=m_bufList) << "\tFail to alloc buffer list";
 
@@ -35,26 +36,32 @@ TEST_F(BLTest, selfAlloc) {
 	ASSERT_TRUE(NULL==m_bufList->GetUsed(false)) << "\tused list should be empty";
 	for( i=0; i<BUF_COUNT; ++i )
 		ASSERT_TRUE(NULL!=m_bufList->GetFree()) << "\tbuffer " << i << " should be in free list";
-	ASSERT_FALSE(m_bufList->Init(BUF_COUNT, &buffer)) << "selfALloc list cannot be user configured again";
+	ASSERT_FALSE(m_bufList->Init(bufs)) << "selfALloc list cannot be user configured again";
 }
 
 
 TEST_F(BLTest, userAlloc) {
 	int i;
-	Buffer *buffer;
+	Buffer *bufs[BUF_COUNT+1] = { NULL };
 	
 	ASSERT_TRUE(NULL!=m_bufList) << "\tFail to alloc buffer list";
 
 	for( i=0; i<=BUF_COUNT; ++i ) {
-		buffer = new Buffer(false);
-		if( !buffer ) printf("fails to allocate buffer\n");
+		bufs[i] = new Buffer(false);
+		ASSERT_TRUE( NULL!=bufs[i] ) << "Fails to allocate buffer\n";
+		goto cleanup;
+		
 		if( BUF_COUNT==i ) {
-			ASSERT_FALSE(m_bufList->Init(BUF_COUNT, buffer)) << "\tCannot allocate more then configured buffers (" << BUF_COUNT << ")";
-			delete buffer;
-		} else ASSERT_TRUE(m_bufList->Init(BUF_COUNT, buffer)) << "\tFail to init buffer list";
+			bufs[i] = NULL;              //end
+			ASSERT_FALSE(m_bufList->Init(bufs)) << "\tShould be init'ed twice";
+		}
 	}
-	ASSERT_FALSE(m_bufList->Init(BUF_COUNT, 1024)) << "\tuserALloc list connt be self configured again";
 	for( i=0; i<BUF_COUNT; ++i )
 		ASSERT_TRUE(NULL!=m_bufList->GetFree()) << "\tbuffer " << i << " should be in free list";
+
+cleanup:
+	for( i=0; i<BUF_COUNT; ++i )
+		if( bufs[i] ) delete bufs[i];
+	return;
 	
 }

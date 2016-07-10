@@ -18,7 +18,7 @@ using namespace std;
    is suitable for polling model. The derived class can override virtual function
    for other implementations.
    
-   The destructor will delete the buffer as well
+   The destructor will delete the buffer objects allocated this class
 
 case 1:
    bl = new BufferList();
@@ -30,11 +30,7 @@ case 1:
    
 case 2:
    bl = new BufferList(false);        //no allocation, buffer is injected from outside
-   b1.Init(10, buf)
-   b1.Init(10, buf)                   //each placed in order
-   b1.Init(10, buf)                   //total times
-   :
-   b1.Init(10, buf)                   //till "count" times injection ...finish the init
+   b1.Init(bufs)
       :
    ==== now all buffer in freeList no matter lock provided or not ====
  */
@@ -42,7 +38,6 @@ class BufferList {
 protected:
 	//! @brief Nr. of buffer managed by this list
 	unsigned int         m_count;
-	unsigned int         m_waitCount;
 	Buffer               **m_buffers;
 
 	//! @brief exclusive access of free list
@@ -56,6 +51,8 @@ protected:
 	//! @brief list of occupied buffers
 	list<Buffer *>       m_usedList;
 	//-------- above protected by m_usedLock
+
+	bool                 m_usrAlloc;
 
 	/*! @detail
 	    Free all buffer in free and used queues. Make sure no one is accessing.
@@ -89,7 +86,14 @@ public:
 	             false - failure
 	 */
 	virtual bool         Init(unsigned int count, unsigned int size);
-	virtual bool         Init(unsigned int count, Buffer *buf);
+	/*! @details
+	 * The caller allocated buffer and inject to the list. In this case, buffers won't be
+	 * deleted by list.
+	 * @param bufs - an array, ended with NULL,  of Buffer pointer
+	 * @return true - successful
+	 *         false - failure
+	 */
+	virtual bool         Init(Buffer **bufs);
 
 	/*! @detail
 	 * Get a free buffer from FIFO queue (head), size is cleared

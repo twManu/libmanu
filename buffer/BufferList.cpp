@@ -4,10 +4,10 @@
 
 BufferList::BufferList(BaseLock *fLock, BaseLock *uLock)
 	: m_count(0)
-	, m_waitCount(0)
 	, m_buffers(NULL)
 	, m_freeLock(fLock)
 	, m_usedLock(uLock)
+	, m_usrAlloc(false)
 {
 }
 
@@ -71,22 +71,21 @@ bool BufferList::Init(unsigned int count, unsigned int size)
 }
 
 
-bool BufferList::Init(unsigned int count, Buffer *buf)
+bool BufferList::Init(Buffer **bufs)
 {
-	if( !buf ) return false;
-	if( !m_waitCount ) {        //first Init
-		if( !preInitBuffer(count) ) return false;
-		//m_count set and m_buffers allocated
-	}
+	int count=0;
 
-	if( m_waitCount!=m_count ) m_buffers[m_waitCount++] = buf;
-	else return false;
-	
-	if( m_waitCount==m_count ) {
-		m_waitCount = 0;
+	if( !bufs ) return false;
+	for( ; bufs[count]; ++count);         //cal number of buffers
+
+	if( count ) {                         //at least one buffer
+		if( !preInitBuffer(count) ) return false;
+		while(count--) m_buffers[count] = bufs[count];
 		moveToFreeList();
+		m_usrAlloc = true;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 
@@ -105,9 +104,11 @@ void BufferList::Clean()
 	UUNLOCK();
 
 	if( tmpBuf ) {
-		for( int i=0; i<(int)m_count; ++i ) {
-			if( NULL==tmpBuf[i] ) break;   //stop on first NULL
-			delete tmpBuf[i];
+		if( !m_usrAlloc ) {
+			for( int i=0; i<(int)m_count; ++i ) {
+				if( NULL==tmpBuf[i] ) break;         //stop on first NULL
+				delete tmpBuf[i];
+			}
 		}
 		delete [] tmpBuf;
 	}

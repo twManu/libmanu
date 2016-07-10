@@ -3,7 +3,7 @@ TARGET=Buffer_utest BufferList_utest
 GTEST_HEADERS = /usr/include/gtest/*.h /usr/include/gtest/internal/*.h
 GTEST_DIR = /usr/src/gtest
 CFLAGS += -I$(GTEST_DIR)/include
-GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+GTEST_SRCS_ = $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
 CFLAGS += -Wall -O2
 LDFLAGS=-lpthread
