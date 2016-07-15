@@ -1,0 +1,37 @@
+build
+===========
+
+1. define the following environment variable
+	- CFLAGS
+	- LDFLAGS
+	- CORSS_COMPILE
+2. make
+
+
+design
+===========
+
+There are layers of list and thread in a media pipe line.
+Here is a simple programming guide.
+
+a. buffers are initialized to park in certain upstream lists.
+b. when starts, upper stream thread fills data in buffer and then injects to used side of
+   downstream list.
+c. downstream thread then extracts buffer from used side of list and move it to the next
+   downstream list or return back to upper stream list.
+d. it often requires application logic to build graph, arrange thread for processing.
+
+During pipe stop, here is the suggested model:
+	1. stop from upper to down stream thread and wait for ack ONE BY ONE.
+	   Upon STOP, a thread
+		- stop sending buffers to downstream
+		- move processing buffers to free side of upper stream
+		- ack means the above happened
+	2. after all thread acked on STOP, clean from down to upper stream and wait for ack.
+	   Upon CLEAN, a thread
+		- move buffers from used side to free side
+		- ack CLEAN
+		- thread exits
+	3. application then delete list objects since all buffers should be in free side now
+	4. delete buffers
+
