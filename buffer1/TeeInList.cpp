@@ -86,7 +86,8 @@ void TeeInList::threadRun()
 		srcBuf = static_cast <VideoBuffer*> (GetUsed(-1));    //block
 		if( NULL==srcBuf ) continue;
 		if( m_stopThread ) {
-			PutFree(srcBuf);
+			srcBuf->m_cloneCount = 0;
+			m_lingerList.push_back(srcBuf);
 			break;
 		}
 		int cloneCount = 0, mask=1;
