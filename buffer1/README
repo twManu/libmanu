@@ -15,23 +15,24 @@ There are layers of list and thread in a media pipe line.
 Here is a simple programming guide.
 
 a. buffers are initialized to park in certain upstream lists.
-b. when starts, upper stream thread fills data in buffer and then injects to used side of
-   downstream list.
+b. when starts, upstream thread fills data in buffer and then injects to used side of
+   downstream list, which downstream thread is supposedly listening/waiting.
 c. downstream thread then extracts buffer from used side of list and move it to the next
-   downstream list or return back to upper stream list.
-d. it often requires application logic to build graph, arrange thread for processing.
+   downstream list or return back to free side of upstream list.
+d. it often requires application logic to build graph, arrange thread to achieve these.
 
 During pipe stop, here is the suggested model:
 	1. stop from upper to down stream thread and wait for ack ONE BY ONE.
 	   Upon STOP, a thread
 		- stop sending buffers to downstream
 		- move processing buffers to free side of upper stream
-		- ack means the above happened
-	2. after all thread acked on STOP, clean from down to upper stream and wait for ack.
+		- ack means the above has done
+	2. after all threads acked on STOP, clean from down to upper stream and wait for ack ONE BY ONE.
 	   Upon CLEAN, a thread
 		- move buffers from used side to free side
 		- ack CLEAN
+		- putTeeOutput if the thread has called getTeeOutput
 		- thread exits
-	3. application then delete list objects since all buffers should be in free side now
-	4. delete buffers
+	3. application then delete list objects from down- to up- stream to make sure all buffers are in free side now
+	4. delete all buffers
 

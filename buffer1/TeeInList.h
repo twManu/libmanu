@@ -9,16 +9,21 @@ class TeeOutList;
 /*!
    @class TeeList
    The tee is composed of one input list and many output lists. The VideoBuffers from input side is to
-   be cloned to 0-N outputs as TeeBuffer. And the output side list are always used a pass through
+   be cloned to 0-N outputs as TeeBuffer. And the output side list are always used a pass through.
+   
+   Outputs of a tee can only be used between get- and put- TeeOutput so buffers must be kept in
+   list before put operation.
+ 
    Usage: buffer starts with this list
    	construct(n)
 	Init(buffers)
 	list0=getTeeOutput(0)
-	 :
+	//use of buffer in tee0
 	list2=getTeeOutput(2)
-	 :
+	//use of buffer in tee2
+	//return all buffer to tee2
 	putTeeOutput(list2)
-	 :
+	//return all buffer to tee0
 	putTeeOutput(list0)
 	destruct ... WAITING for free buffers
 
