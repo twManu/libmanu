@@ -19,7 +19,7 @@
 # created to the list.
 
 
-TESTS += unittest
+TESTS += testCgetchar unittest
 INC_DIR = ../
 GTEST_DIR = /usr/src/gtest
 
@@ -52,3 +52,7 @@ clean :
 ###
 unittest : $(USER_OBJ)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@ -lgtest -lgtest_main -lpthread
+
+testCgetchar: testCgetchar.c
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
+	
