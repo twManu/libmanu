@@ -21,6 +21,7 @@ V4l2Base::V4l2Base()
 	memset(&m_v4l2_buffer, 0, sizeof(m_v4l2_buffer));
 	m_v4l2_buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;   //hard coding for now
 	m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
+	//must leave a 0 in the last entry
 	memset(m_supportFormat, 0, sizeof(m_supportFormat));
 }
 
@@ -417,7 +418,8 @@ bool V4l2Base::applyFormat()
 		fmt.fmt.pix.width = m_width;
 		fmt.fmt.pix.height = m_height;
 		fmt.fmt.pix.pixelformat = m_curFormat;
-		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+		//fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+		fmt.fmt.pix.field = V4L2_FIELD_ANY;
 		if( ioctl(m_fd, VIDIOC_S_FMT, &fmt) ) {
 			perror("S_FMT");
 			return false;
