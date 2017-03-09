@@ -109,6 +109,7 @@ bool V4l2Base::allocBuf()
 bool V4l2Base::reqBuf()
 {
 	struct v4l2_requestbuffers request;
+	bool nResult;
 	
 	if( !m_mmap ) return true;
 
@@ -116,7 +117,12 @@ bool V4l2Base::reqBuf()
 	request.count = m_bufCount;
 	request.type = m_v4l2_buffer.type;
 	request.memory = m_v4l2_buffer.memory;
-	return !ioctl(m_fd, VIDIOC_REQBUFS, &request);
+	nResult = ioctl(m_fd, VIDIOC_REQBUFS, &request);
+	if( nResult ) {
+		perror("REQBUFS");
+		printf("buf count = %d\n", m_bufCount);
+	}
+	return !nResult;
 }
 
 
@@ -162,7 +168,7 @@ bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool blo
 	if( m_bufCount ) {
 		if( !reqBuf() ) return false;        //fail to request buffer for mapping
 		if( !allocBuf() ) return false;
-	}
+	} else printf("no buffer allocated\n");
 
 	return (m_fd>=0);
 }
@@ -422,7 +428,7 @@ bool V4l2Base::applyFormat()
 		fmt.fmt.pix.field = V4L2_FIELD_ANY;
 		if( ioctl(m_fd, VIDIOC_S_FMT, &fmt) ) {
 			perror("S_FMT");
-			return false;
+			//manutest fall thru return false;
 		}
 
 		if( (m_width!=fmt.fmt.pix.width) || (m_height!=fmt.fmt.pix.height) ) {
