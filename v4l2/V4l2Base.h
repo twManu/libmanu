@@ -91,6 +91,9 @@ public:
 	bool setFormat(unsigned int w, unsigned int h, unsigned int pixelformat);
 	void getFormat(unsigned int *w, unsigned int *h, unsigned int *pixelformat);
 	const char *pixFormatGetName(unsigned int pixformat);
+	//!@brief set frame rate, if no parameter, use what is got from device
+	void setFrmRate(unsigned int num=0, unsigned int denom=0);
+
 	/*!@detail 
 	 * streaming on or off, return true if success
 	 * all buffer is queued to driver and before that, getBuffer is not successful

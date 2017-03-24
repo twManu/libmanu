@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "../libcommon.h"
 
 V4l2Base::V4l2Base()
@@ -347,6 +348,30 @@ void V4l2Base::printCapability()
 }
 
 
+void V4l2Base::setFrmRate(unsigned int num, unsigned int denom)
+{
+	struct v4l2_streamparm sparm;
+
+	memset(&sparm, 0, sizeof(sparm));
+	sparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if( ioctl(m_fd, VIDIOC_G_PARM, &sparm) ) {
+		printf("Unable to get parm: %s (%d).\n", strerror(errno), errno);
+        } else {
+		if( num )
+			sparm.parm.capture.timeperframe.numerator = num;
+		else
+			printf("cur numerator = %d\n", sparm.parm.capture.timeperframe.numerator);
+		if( denom )
+			sparm.parm.capture.timeperframe.denominator = denom;
+		else
+			printf("cur denominator = %d\n", sparm.parm.capture.timeperframe.denominator);
+		if( ioctl(m_fd, VIDIOC_S_PARM, &sparm) ) {
+			printf("Unable to set parm: %s (%d).\n", strerror(errno), errno);
+		}
+	}
+}
+
+
 const char *V4l2Base::pixFormatGetName(unsigned int pixformat)
 {
 	const char *name = NULL;
@@ -437,6 +462,7 @@ bool V4l2Base::applyFormat()
 			m_height =fmt.fmt.pix.height;
 		}
 		printf("set %s @ %ux%u\n", pixFormatGetName(m_curFormat), m_width, m_height);
+		setFrmRate();
 	} else if( m_capability.capabilities & V4L2_CAP_VBI_CAPTURE ) {
 		fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 		printf("vbi not yet support\n");
