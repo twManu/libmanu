@@ -476,6 +476,18 @@ bool V4l2Base::applyFormat()
 }
 
 
+int V4l2Base::enumFormat(unsigned int **fmtArray)
+{
+	int count = 0;
+	if( fmtArray ) {
+		while(count<MAX_SUPPORT_FORMT && m_supportFormat[count])
+			++count;
+		*fmtArray = m_supportFormat;
+	}
+	return count;
+}
+
+
 void V4l2Base::getFormat(unsigned int *w, unsigned int *h, unsigned int *pixelformat)
 {
 	if( w ) *w = m_width;

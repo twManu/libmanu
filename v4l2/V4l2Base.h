@@ -90,6 +90,8 @@ public:
 	 */
 	bool setFormat(unsigned int w, unsigned int h, unsigned int pixelformat);
 	void getFormat(unsigned int *w, unsigned int *h, unsigned int *pixelformat);
+	//!@brief report V4L2_PIX_FMT_XXX in fmtArray and the size, 0 means none
+	int  enumFormat(unsigned int **fmtArray);
 	const char *pixFormatGetName(unsigned int pixformat);
 	//!@brief set frame rate, if no parameter, use what is got from device
 	void setFrmRate(unsigned int num=0, unsigned int denom=0);
