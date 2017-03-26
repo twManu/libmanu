@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
 	checkParam(argc, argv);
 	v4l2.setFormat(640, 360, V4L2_PIX_FMT_YUYV);
-	//v4l2.setFormat(1920, 1080, V4L2_PIX_FMT_MJPEG);
+	//v4l2.setFormat(640, 360, V4L2_PIX_FMT_MJPEG);
 	//v4l2.setFormat(1920, 1080, V4L2_PIX_FMT_H264);
 	if( !v4l2.initV4l2(g_devNr, BUF_COUNT) ) return -1;
 	/*
