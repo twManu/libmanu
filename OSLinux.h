@@ -7,6 +7,7 @@
 #include "BaseThread.h"
 #include "TimeSec.hpp"
 
+#define CLR_STRUCT(s)	do { memset(&(s), 0, sizeof(s)); } while(0)
 
 /*!
     @class LinuxLock
@@ -26,6 +27,40 @@ public:
 	virtual void         Acquire();
 	//! @brief to release lock
 	virtual void         Release();
+};
+
+
+//in unit usec
+class swClock {
+protected:
+	struct timeval       m_Tstart;
+	struct timeval       m_Tcurrent;
+
+public:
+	swClock() {
+		reset();
+		CLR_STRUCT(m_Tcurrent);
+	}
+	swClock(swClock &srcClock) {
+		m_Tstart = srcClock.m_Tstart;
+		CLR_STRUCT(m_Tcurrent);
+	}
+	void    reset() { gettimeofday(&m_Tstart, NULL); }
+	//! @brief return time diff from m_Tstart in usec
+	long long int diff(int doReset=0) {
+		long long int usec = 0;
+		//probably not inited
+		if( m_Tcurrent.tv_usec!=m_Tstart.tv_usec ||
+			m_Tcurrent.tv_sec!=m_Tstart.tv_sec ) {
+			gettimeofday(&m_Tcurrent, NULL);
+			usec = m_Tcurrent.tv_usec - m_Tstart.tv_usec;
+			usec += (m_Tcurrent.tv_sec - m_Tstart.tv_sec)*1000*1000;
+			if( doReset ) m_Tstart = m_Tcurrent;
+		} else if( doReset ) {
+			reset();
+		}
+		return usec;
+	}
 };
 
 

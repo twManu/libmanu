@@ -1,6 +1,7 @@
 #include "V4l2Base.h"
 #include <stdio.h>
 #include <getopt.h>
+#include "OSLinux.h"
 
 #define BUF_COUNT	4
 
@@ -8,7 +9,7 @@ static int g_cap_count = 16;
 
 void usage() {
 	printf("Test streaming of given video device\n");
-	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT\n");
+	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT]\n");
 	printf("      DEVNR - /dev/videoX which defaults to 0\n");
 	printf("      CAP_COUNT - default to %d\n", g_cap_count);
 	exit(-1);
@@ -42,6 +43,8 @@ int main(int argc, char **argv)
 {
 	V4l2Base v4l2;
 	V4l2BaseBuffer *buf;
+	swClock swclk;
+	long long int diffUsec;
 	int **fmts;
 	int i, count;
 
@@ -59,16 +62,19 @@ int main(int argc, char **argv)
 
 
 	if( v4l2.streaming(true) ) {
-		for( i=0; i<g_cap_count; ++i ) {
+		swclk.reset();
+		for( i=count=0; i<g_cap_count; ++i, ++count ) {
 			buf = v4l2.getBuffer();
 			if( !buf ) {
 				printf("fail to get buffer\n");
 				break;
 			}
-			printf("got buffer[%d], use size=%u\n", buf->getIndex(), buf->GetUsedSize());
+			printf("got buffer[%d], use size=%u, cnt=%d\n", buf->getIndex(), buf->GetUsedSize(), count);
 			v4l2.putBuffer(buf);
 		}
+		diffUsec = swclk.diff();
 		v4l2.streaming(false);
+		printf("cnt=%d, dT = %lld usec, fps=%0.2f\n", count, diffUsec, (double)(count*1000*1000)/diffUsec);
 	} else perror("STREAMON");
 
 	return 0;

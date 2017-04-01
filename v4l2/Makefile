@@ -1,5 +1,5 @@
 TARGET=V4l2BaseTest V4l2MMapTest
-CFLAGS=-Wall -O2
+CFLAGS=-Wall -O2 -I../
 LDFLAGS=-lpthread
 
 include ../macro.inc
