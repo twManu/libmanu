@@ -46,7 +46,7 @@ private:
 	void loadCapability();
 	void printCapability();
 	void checkVideoFormat();
-	bool reqBuf();
+	bool reqBuf(int);
 	void deallocBuf();
 	bool allocBuf();
 	bool applyFormat();
@@ -58,6 +58,7 @@ protected:
 	int                            m_devIndex;
 	int                            m_bufCount;
 	bool                           m_blockIO;
+	/* !@brief alloc and map ... bad, the are separate */
 	bool                           m_mmap;
 	bool                           m_streaming;
 	unsigned int                   m_supportFormat[MAX_SUPPORT_FORMT];

@@ -48,6 +48,7 @@ void V4l2Base::deallocBuf()
 		}
 		delete [] m_buffers;
 		m_buffers = NULL;
+		reqBuf(0);
 	}
 }
 
@@ -107,7 +108,7 @@ bool V4l2Base::allocBuf()
 
 
 //m_fd and m_bufCount not checked
-bool V4l2Base::reqBuf()
+bool V4l2Base::reqBuf(int count)
 {
 	struct v4l2_requestbuffers request;
 	bool nResult;
@@ -115,13 +116,13 @@ bool V4l2Base::reqBuf()
 	if( !m_mmap ) return true;
 
 	memset(&request, 0, sizeof(request));
-	request.count = m_bufCount;
+	request.count = count;
 	request.type = m_v4l2_buffer.type;
 	request.memory = m_v4l2_buffer.memory;
 	nResult = ioctl(m_fd, VIDIOC_REQBUFS, &request);
 	if( nResult ) {
 		perror("REQBUFS");
-		printf("buf count = %d\n", m_bufCount);
+		printf("buf count = %d\n", count);
 	}
 	return !nResult;
 }
@@ -167,7 +168,7 @@ bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool blo
 	if( !applyFormat() ) return false;
 	//m_fd valid
 	if( m_bufCount ) {
-		if( !reqBuf() ) return false;        //fail to request buffer for mapping
+		if( !reqBuf(m_bufCount) ) return false;        //fail to request buffer for mapping
 		if( !allocBuf() ) return false;
 	} else printf("no buffer allocated\n");
 
