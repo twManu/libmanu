@@ -50,6 +50,7 @@ private:
 	void deallocBuf();
 	bool allocBuf();
 	bool applyFormat();
+	void objectInit();
 
 protected:
 	/* !@brief m_fd <0 if invalid */
@@ -71,6 +72,8 @@ protected:
 
 public:
 	V4l2Base();
+	//!@brief index got from enumV4L2Format
+	V4l2Base(unsigned int indexFormat);
 	//!@brief child class need to call that of parent
 	virtual ~V4l2Base();
 	/* !@details
@@ -96,6 +99,8 @@ public:
 	const char *pixFormatGetName(unsigned int pixformat);
 	//!@brief set frame rate, if no parameter, use what is got from device
 	void setFrmRate(unsigned int num=0, unsigned int denom=0);
+	//!@brief from 0 to max_support_format index
+	unsigned int enumV4L2Format(int index);
 
 	/*!@detail 
 	 * streaming on or off, return true if success

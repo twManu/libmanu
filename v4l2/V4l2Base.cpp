@@ -19,6 +19,12 @@ V4l2Base::V4l2Base()
 	, m_curFormat(0)
 	, m_buffers(NULL)
 {
+	objectInit();
+}
+
+
+void V4l2Base::objectInit()
+{
 	memset(&m_v4l2_buffer, 0, sizeof(m_v4l2_buffer));
 	m_v4l2_buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;   //hard coding for now
 	m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
@@ -340,6 +346,21 @@ static val_name_t g_format_vn[] = {
 };
 
 
+V4l2Base::V4l2Base(unsigned int indexFormat)
+	: m_fd(-1)
+	, m_streaming(false)
+	, m_width(0)
+	, m_height(0)
+	, m_buffers(NULL)
+{
+	if( indexFormat<SIZE_ARRAY(g_format_vn) )
+		m_curFormat = g_format_vn[indexFormat].val;
+	else
+		m_curFormat = 0;
+	objectInit();
+}
+
+
 void V4l2Base::printCapability()
 {
 	for( int i=0; i<SIZE_ARRAY(g_capability_vn); ++i) {
@@ -384,6 +405,14 @@ const char *V4l2Base::pixFormatGetName(unsigned int pixformat)
 		}
 	}
 	return name;
+}
+
+
+unsigned int V4l2Base::enumV4L2Format(int index)
+{
+	if( index>=SIZE_ARRAY(g_format_vn) )
+		return 0;
+	return g_format_vn[index].val;	
 }
 
 

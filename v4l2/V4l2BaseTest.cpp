@@ -7,20 +7,36 @@
 static int g_cap_count = 16;
 
 void usage() {
+	int index;
+	V4l2Base v4l2;
 	printf("Test streaming of given video device\n");
-	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT\n");
+	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT] [-f FORMAT]\n");
 	printf("      DEVNR - /dev/videoX which defaults to 0\n");
 	printf("      CAP_COUNT - default to %d\n", g_cap_count);
+	printf("      FORMAT - definded as following\n");
+	for( index=0; 1; ++index ) {
+		const char *name;
+		unsigned int fmt;
+
+		fmt = v4l2.enumV4L2Format(index);
+		if( !fmt ) break;
+		name = v4l2.pixFormatGetName(fmt);
+		if( name )
+			printf("  %s : %d\n", name, index);
+		else
+			printf("%d-th missing foramt\n", index);
+	}
 	exit(-1);
 }
 
 static int g_devNr = 0;
+static int g_format = -1;
 
 bool checkParam(int argc, char *argv[])
 {
 	int opt;
 
-	while( (opt = getopt(argc, argv, "hn:c:")) != -1) {
+	while( (opt = getopt(argc, argv, "hn:c:f:")) != -1) {
 		switch (opt) {
 		case 'n':
 			g_devNr = atoi(optarg);
@@ -29,6 +45,9 @@ bool checkParam(int argc, char *argv[])
 		case 'c':
 			g_cap_count = atoi(optarg);
 			printf("to capture %d buffer\n", g_cap_count);
+			break;
+		case 'f':
+			g_format = atoi(optarg);
 			break;
 		default:
 			usage();
@@ -46,17 +65,9 @@ int main(int argc, char **argv)
 	int i, count;
 
 	checkParam(argc, argv);
-	v4l2.setFormat(640, 360, V4L2_PIX_FMT_YUYV);
-	//v4l2.setFormat(640, 360, V4L2_PIX_FMT_MJPEG);
-	//v4l2.setFormat(1920, 1080, V4L2_PIX_FMT_H264);
+	v4l2.setFormat(640, 360,
+		g_format<0 ? V4L2_PIX_FMT_YUYV : v4l2.enumV4L2Format(g_format));
 	if( !v4l2.initV4l2(g_devNr, BUF_COUNT) ) return -1;
-	/*
-	count = v4l2.enumFormat(fmts);
-	if( !count ) {
-		printf("no video format enumerated\n");
-		return -1;
-	} */
-
 
 	if( v4l2.streaming(true) ) {
 		for( i=0; i<g_cap_count; ++i ) {
