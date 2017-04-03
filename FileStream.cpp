@@ -53,10 +53,10 @@ void FileStream::close()
 }
 
 
-int FileStream::read(unsigned char *buffer, int size)
+int FileStream::read(void *buffer, int size)
 {
 	int totalRead, curRead, rest;
-	unsigned char *ptr = buffer;
+	unsigned char *ptr = (unsigned char *) buffer;
 
 	if( !(m_mode&BM_RDONLY) ) {
 		ERROR("read not allowed\n");
@@ -88,7 +88,7 @@ int FileStream::read(unsigned char *buffer, int size)
 }
 
 
-int FileStream::write(const unsigned char *buffer, int size)
+int FileStream::write(const void *buffer, int size)
 {
 	int totoalWrite, curWrite, rest;
 	unsigned char *ptr = (unsigned char *)buffer;

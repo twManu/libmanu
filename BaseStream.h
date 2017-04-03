@@ -26,7 +26,7 @@ public:
 	 *           <1 - error
 	 *           otherwise - size actually read. 
 	 */
-	virtual int read(unsigned char *buffer, int size) { return 0; }
+	virtual int read(void *buffer, int size) { return 0; }
 	
 	/*! @detail
 	 *  Write data from buffer to stream with size as long as no error happened.
@@ -36,7 +36,7 @@ public:
 	 *  @return <1 - error
 	 *           otherwise - size actually write.
 	 */
-	virtual int write(const unsigned char *buffer, int size) { return 0; }
+	virtual int write(const void *buffer, int size) { return 0; }
 };
 
 #endif	//__BASESTREAM_H__

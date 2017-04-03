@@ -91,6 +91,11 @@ BufferList_DEP = ${LIBBUFFER}/BufferList.cpp\
 OSLinux_DEP = ${LIBMANU}/OSLinux.cpp ${LIBMANU}/OSLinux.h\
 	${LIBMANU}/BaseLock.h ${LIBMANU}/libcommon.h\
 	${LIBMANU}/BaseThread.h ${LIBMANU}/TimeSec.hpp
+FileDump_DEP = ${LIBMANU}/FileDump.cpp ${LIBMANU}/FileDump.h\
+	${FileStream_DEP}
+
+FileStream_DEP = ${LIBMANU}/FileStream.cpp ${LIBMANU}/FileStream.h\
+	${LIBMANU}/BaseStream.h ${LIBMANU}/libcommon.h\
 
 #
 # $1 - target w/o extention nor path. i.e. to generate in current path
