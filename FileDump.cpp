@@ -1,6 +1,7 @@
 #include "FileDump.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 FileDump::FileDump(const char *fname, int mode, int count)
 	: FileStream(fname, mode)
@@ -70,7 +71,7 @@ int FileDump::open()
 {
 	int tmpSz;
 
-	if( BM_WRONLY!=m_mode && BM_RDONLY==m_mode ) {
+	if( BM_WRONLY!=m_mode && BM_RDONLY!=m_mode ) {
 		ERROR("either WO nor RD\n");
 		return 0;
 	}
@@ -122,6 +123,14 @@ failure:
 }
 
 
+void FileDump::readHdr(int &hdrSize, int &maxDataSize, int &count)
+{
+	hdrSize = m_hdrSize;
+	maxDataSize = m_maxDataSize;
+	count = m_count;
+}
+
+
 void FileDump::close()
 {
 	if( m_sizeTable ) {
@@ -130,10 +139,13 @@ void FileDump::close()
 			lseek(m_fd, 0, SEEK_SET);
 			if( sizeof(m_hdrSize)!=FileStream::write(&m_hdrSize, sizeof(m_hdrSize)) )
 				ERROR("fail to write hdrSize\n");
+			else printf("  Writing hdrSize=%d\n", m_hdrSize);
 			if( sizeof(m_maxDataSize)!=FileStream::write(&m_maxDataSize, sizeof(m_maxDataSize)) )
 				ERROR("fail to write maxDataSize\n");
+			else printf("  Writing maxDataSize=%d\n", m_maxDataSize);
 			if( sz!=FileStream::write(m_sizeTable, sz) )
 				ERROR("fail to write sizeTable\n");
+			else printf("  Writing array[%d]\n", m_count);
 		}
 		free(m_sizeTable);
 		m_sizeTable = NULL;

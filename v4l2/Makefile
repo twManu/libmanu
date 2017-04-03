@@ -1,9 +1,9 @@
 TARGET=V4l2BaseTest V4l2MMapTest
-CFLAGS=-Wall -O2
+CFLAGS=-Wall -O2 -I..
 LDFLAGS=-lpthread
 LIBMANU=..
 
-include ../macro.inc
+include ${LIBMANU}/macro.inc
 
 #all objs put in current dir to avoid mixed result across projects
 OBJ_V4l2BaseTest=V4l2BaseTest.o V4l2Base.o Buffer.o FileStream.o FileDump.o

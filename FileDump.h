@@ -31,6 +31,7 @@ public:
 	virtual int writeData(const void *data, int size);
 	//!@brief, return size read, failure if -1
 	virtual int readData(void *data);
+	void readHdr(int &hdrSize, int &maxDataSize, int &count);
 
 
 protected:
