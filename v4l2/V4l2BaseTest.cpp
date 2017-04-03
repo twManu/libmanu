@@ -10,7 +10,7 @@ void usage() {
 	int index;
 	V4l2Base v4l2;
 	printf("Test streaming of given video device\n");
-	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT] [-f FORMAT]\n");
+	printf("Usage: V4l2BaseTest [-n DEVNR] [-c CAP_COUNT] [-f FORMAT] [-s WIDTHxHEIGHT]\n");
 	printf("      DEVNR - /dev/videoX which defaults to 0\n");
 	printf("      CAP_COUNT - default to %d\n", g_cap_count);
 	printf("      FORMAT - definded as following\n");
@@ -31,12 +31,15 @@ void usage() {
 
 static int g_devNr = 0;
 static int g_format = -1;
+static int g_width = 640;
+static int g_height = 360;
 
 bool checkParam(int argc, char *argv[])
 {
 	int opt;
+	int i, w, h;
 
-	while( (opt = getopt(argc, argv, "hn:c:f:")) != -1) {
+	while( (opt = getopt(argc, argv, "hn:c:f:s:")) != -1) {
 		switch (opt) {
 		case 'n':
 			g_devNr = atoi(optarg);
@@ -48,6 +51,12 @@ bool checkParam(int argc, char *argv[])
 			break;
 		case 'f':
 			g_format = atoi(optarg);
+			break;
+		case 's':
+			i = sscanf(optarg, "%dx%d", &w, &h);
+			if( 2!=i ) usage();
+			g_width = w;
+			g_height = h;
 			break;
 		default:
 			usage();
@@ -61,11 +70,10 @@ int main(int argc, char **argv)
 {
 	V4l2Base v4l2;
 	V4l2BaseBuffer *buf;
-	int **fmts;
 	int i, count;
 
 	checkParam(argc, argv);
-	v4l2.setFormat(640, 360,
+	v4l2.setFormat(g_width, g_height,
 		g_format<0 ? V4L2_PIX_FMT_YUYV : v4l2.enumV4L2Format(g_format));
 	if( !v4l2.initV4l2(g_devNr, BUF_COUNT) ) return -1;
 
