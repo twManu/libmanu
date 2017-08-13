@@ -19,6 +19,12 @@ V4l2Base::V4l2Base()
 	, m_curFormat(0)
 	, m_buffers(NULL)
 {
+	objectInit();
+}
+
+
+void V4l2Base::objectInit()
+{
 	memset(&m_v4l2_buffer, 0, sizeof(m_v4l2_buffer));
 	m_v4l2_buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;   //hard coding for now
 	m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
@@ -48,6 +54,7 @@ void V4l2Base::deallocBuf()
 		}
 		delete [] m_buffers;
 		m_buffers = NULL;
+		reqBuf(0);
 	}
 }
 
@@ -107,7 +114,7 @@ bool V4l2Base::allocBuf()
 
 
 //m_fd and m_bufCount not checked
-bool V4l2Base::reqBuf()
+bool V4l2Base::reqBuf(int count)
 {
 	struct v4l2_requestbuffers request;
 	bool nResult;
@@ -115,13 +122,13 @@ bool V4l2Base::reqBuf()
 	if( !m_mmap ) return true;
 
 	memset(&request, 0, sizeof(request));
-	request.count = m_bufCount;
+	request.count = count;
 	request.type = m_v4l2_buffer.type;
 	request.memory = m_v4l2_buffer.memory;
 	nResult = ioctl(m_fd, VIDIOC_REQBUFS, &request);
 	if( nResult ) {
 		perror("REQBUFS");
-		printf("buf count = %d\n", m_bufCount);
+		printf("buf count = %d\n", count);
 	}
 	return !nResult;
 }
@@ -167,7 +174,7 @@ bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool blo
 	if( !applyFormat() ) return false;
 	//m_fd valid
 	if( m_bufCount ) {
-		if( !reqBuf() ) return false;        //fail to request buffer for mapping
+		if( !reqBuf(m_bufCount) ) return false;        //fail to request buffer for mapping
 		if( !allocBuf() ) return false;
 	} else printf("no buffer allocated\n");
 
@@ -339,6 +346,21 @@ static val_name_t g_format_vn[] = {
 };
 
 
+V4l2Base::V4l2Base(unsigned int indexFormat)
+	: m_fd(-1)
+	, m_streaming(false)
+	, m_width(0)
+	, m_height(0)
+	, m_buffers(NULL)
+{
+	if( indexFormat<SIZE_ARRAY(g_format_vn) )
+		m_curFormat = g_format_vn[indexFormat].val;
+	else
+		m_curFormat = 0;
+	objectInit();
+}
+
+
 void V4l2Base::printCapability()
 {
 	for( int i=0; i<SIZE_ARRAY(g_capability_vn); ++i) {
@@ -383,6 +405,14 @@ const char *V4l2Base::pixFormatGetName(unsigned int pixformat)
 		}
 	}
 	return name;
+}
+
+
+unsigned int V4l2Base::enumV4L2Format(int index)
+{
+	if( index>=SIZE_ARRAY(g_format_vn) )
+		return 0;
+	return g_format_vn[index].val;	
 }
 
 

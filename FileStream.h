@@ -28,7 +28,7 @@ public:
 	 *           <1 - error
 	 *           otherwise - size actually read. 
 	 */
-	virtual int read(unsigned char *buffer, int size);
+	virtual int read(void *buffer, int size);
 
 	/*! @detail
 	 *  Write data from buffer to stream with size as long as no error happened.
@@ -38,7 +38,7 @@ public:
 	 *  @return <1 - error
 	 *           otherwise - size actually write.
 	 */
-	virtual int write(const unsigned char *buffer, int size);
+	virtual int write(const void *buffer, int size);
 
 protected:
 	char                 m_fname[MAX_FNAME_SIZE+1];

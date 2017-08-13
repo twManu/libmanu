@@ -1,11 +1,12 @@
 TARGET=V4l2BaseTest V4l2MMapTest
 CFLAGS=-Wall -O2 -I../
 LDFLAGS=-lpthread
+LIBMANU=..
 
-include ../macro.inc
+include ${LIBMANU}/macro.inc
 
 #all objs put in current dir to avoid mixed result across projects
-OBJ_V4l2BaseTest=V4l2BaseTest.o V4l2Base.o Buffer.o
+OBJ_V4l2BaseTest=V4l2BaseTest.o V4l2Base.o Buffer.o FileStream.o FileDump.o
 OBJ_V4l2MMapTest=V4l2Base.o V4l2MMap.o V4l2MMapTest.o Buffer.o OSLinux.o
 
 #c and h use the same across projects
@@ -34,6 +35,12 @@ V4l2MMap.o: $(DEP_V4l2MMap)
 	$(CROSS_COMPILE)g++ -c $(CFLAGS) -o $@ $(FIRST_C_IN_DEP)
 
 V4l2BaseTest.o: $(DEP_V4l2BaseTest)
+	$(CROSS_COMPILE)g++ -c $(CFLAGS) -o $@ $(FIRST_C_IN_DEP)
+
+$(call TARGET_OBJ,FileStream)
+	$(CROSS_COMPILE)g++ -c $(CFLAGS) -o $@ $(FIRST_C_IN_DEP)
+
+$(call TARGET_OBJ,FileDump)
 	$(CROSS_COMPILE)g++ -c $(CFLAGS) -o $@ $(FIRST_C_IN_DEP)
 
 OSLinux.o: $(DEP_OSLinux)
