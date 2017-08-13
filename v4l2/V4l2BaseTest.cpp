@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include "OSLinux.h"
 #include "V4l2Base.h"
 #include "FileDump.h"
 
@@ -83,6 +84,8 @@ int main(int argc, char **argv)
 	V4l2Base v4l2;
 	V4l2BaseBuffer *buf;
 	FileDump *dump = NULL;
+	swClock swclk;
+	long long int diffUsec;
 	int i, count;
 
 	checkParam(argc, argv);
@@ -99,6 +102,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+	swclk.reset();
 	if( v4l2.streaming(true) ) {
 		for( i=0; i<g_cap_count; ++i ) {
 			buf = v4l2.getBuffer();
@@ -114,7 +118,10 @@ int main(int argc, char **argv)
 				printf("got buffer[%d], use size=%u\n", buf->getIndex(), buf->GetUsedSize());
 			v4l2.putBuffer(buf);
 		}
+		diffUsec = swclk.diff();
 		v4l2.streaming(false);
+		if( i )
+			printf("count=%d, fps=%0.2f\n", i,(double)(i*1000*1000)/diffUsec);
 	} else perror("STREAMON");
 
 	if( dump ) {

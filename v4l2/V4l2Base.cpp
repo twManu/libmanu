@@ -492,7 +492,7 @@ bool V4l2Base::applyFormat()
 			m_height =fmt.fmt.pix.height;
 		}
 		printf("set %s @ %ux%u\n", pixFormatGetName(m_curFormat), m_width, m_height);
-		setFrmRate(1, 2);
+		setFrmRate(1, 30);
 	} else if( m_capability.capabilities & V4L2_CAP_VBI_CAPTURE ) {
 		fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 		printf("vbi not yet support\n");
