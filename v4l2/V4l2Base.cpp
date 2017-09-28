@@ -27,7 +27,7 @@ void V4l2Base::objectInit()
 {
 	memset(&m_v4l2_buffer, 0, sizeof(m_v4l2_buffer));
 	m_v4l2_buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;   //hard coding for now
-	m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
+	//leave to init m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
 	//must leave a 0 in the last entry
 	memset(m_supportFormat, 0, sizeof(m_supportFormat));
 }
@@ -65,7 +65,6 @@ bool V4l2Base::allocBuf()
 {
 	int i;
 	struct v4l2_buffer buf;
-	void *mmapped_buffer = NULL;
 
 	if( m_buffers ) {
 		printf("duplicate allocation\n");
@@ -78,48 +77,58 @@ bool V4l2Base::allocBuf()
 	} else memset(m_buffers, 0, sizeof(V4l2BaseBuffer *)*m_bufCount);
 
 	for( i=0; i<(int)m_bufCount; ++i ) {
-		if( m_mmap ) {
-			buf = m_v4l2_buffer;
-			buf.index = i;
-			if( 0!=ioctl(m_fd, VIDIOC_QUERYBUF, &buf) ) {
-				printf("fail to query buffer[%d]\n", i);
-				deallocBuf();
-				return false;
-			} else {
-				mmapped_buffer = mmap(
-					NULL /* start anywhere */,
-					buf.length,
-					PROT_READ | PROT_WRITE /* required */,
-					MAP_SHARED /* recommended */,
-					m_fd, buf.m.offset
-				);
-				if( MAP_FAILED==mmapped_buffer ) {
-					printf("fail to map buffer[%d]\n", i);
-					deallocBuf();
-					return false;
-				}
-			}
-		}
-		m_buffers[i] = new V4l2BaseBuffer(false, i);
-		if( !m_buffers[i] ) {
-			printf("fail to new buffer[%d]\n", i);
+		buf = m_v4l2_buffer;
+		buf.index = i;
+		if( 0!=ioctl(m_fd, VIDIOC_QUERYBUF, &buf) ) {
+			printf("fail to query buffer[%d]\n", i);
 			deallocBuf();
 			return false;
 		}
-		if( m_mmap ) m_buffers[i]->Init((unsigned char *)mmapped_buffer, buf.length);
+		if( m_mmap ) {
+			void *mmapped_buffer = mmap(
+				NULL /* start anywhere */,
+				buf.length,
+				PROT_READ | PROT_WRITE /* required */,
+				MAP_SHARED /* recommended */,
+				m_fd, buf.m.offset
+			);
+			if( MAP_FAILED==mmapped_buffer ) {
+				printf("fail to map buffer[%d]\n", i);
+				deallocBuf();
+				return false;
+			}
+			m_buffers[i] = new V4l2BaseBuffer(false, i);
+			if( !m_buffers[i] ) {
+				printf("fail to new buffer[%d]\n", i);
+				deallocBuf();
+				return false;
+			}
+			m_buffers[i]->Init((unsigned char *)mmapped_buffer, buf.length);
+		} else {        //USERPTR
+			m_buffers[i] = new V4l2BaseBuffer(true, i);
+			if( !m_buffers[i]->Init(NULL, buf.length) ) {
+				printf("fail to alloc buf for user ptr\n");
+				deallocBuf();
+				return false;
+			}
+		}
 	}
 
 	return true;
 }
 
 
-//m_fd and m_bufCount not checked
+/*
+ * m_fd and m_bufCount not checked
+ * In : m_v4l2_buffer.type - used for REQBUFS
+ *      m_v4l2_buffer.memory - used for REQBUFS
+ *
+ */
 bool V4l2Base::reqBuf(int count)
 {
 	struct v4l2_requestbuffers request;
 	bool nResult;
 	
-	if( !m_mmap ) return true;
 
 	memset(&request, 0, sizeof(request));
 	request.count = count;
@@ -147,6 +156,13 @@ bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool blo
 	}
 	
 	m_mmap = mmap;
+	if( mmap ) {
+		printf("use memory mapping\n");
+		m_v4l2_buffer.memory = V4L2_MEMORY_MMAP;
+	} else {
+		printf("use user pointer\n");
+		m_v4l2_buffer.memory = V4L2_MEMORY_USERPTR;
+	}
 	m_bufCount = bufCount>VIDEO_MAX_FRAME ? VIDEO_MAX_FRAME : (int) bufCount;
 	if( 1==m_bufCount ) m_bufCount = 2;
 	m_blockIO = block;
@@ -580,6 +596,10 @@ bool V4l2Base::putBuffer(V4l2BaseBuffer *buffer, bool checkStreaming)
 		if( !checkStreaming || m_streaming ) {
 			buffer->m_used = 0;
 			m_v4l2_buffer.index = buffer->m_index;
+			if( !m_mmap ) {
+				m_v4l2_buffer.m.userptr = (unsigned long)buffer->GetData();
+				m_v4l2_buffer.length = buffer->GetSize();
+			}
 			if( 0==ioctl(m_fd , VIDIOC_QBUF, &m_v4l2_buffer) )
 				result = true;
 		}
