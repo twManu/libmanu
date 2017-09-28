@@ -137,8 +137,9 @@ bool V4l2Base::reqBuf(int count)
 	nResult = ioctl(m_fd, VIDIOC_REQBUFS, &request);
 	if( nResult ) {
 		perror("REQBUFS");
-		printf("buf count = %d\n", count);
 	}
+	printf("%s buf count = %d\n",\
+		V4L2_MEMORY_USERPTR==request.memory?"user ptr":"mmap", count);
 	return !nResult;
 }
 
