@@ -13,6 +13,7 @@
 
 V4l2Base::V4l2Base()
 	: m_fd(-1)
+	, m_queryOnly(false)
 	, m_streaming(false)
 	, m_width(0)
 	, m_height(0)
@@ -37,6 +38,7 @@ V4l2Base::~V4l2Base()
 {
 	streaming(false);
 	deallocBuf();
+	if( m_fd>=0 ) close(m_fd);
 }
 
 
@@ -144,13 +146,14 @@ bool V4l2Base::reqBuf(int count)
 }
 
 
-bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool block)
+bool V4l2Base::initV4l2(int devIndex, bool queryOnly, unsigned int bufCount, bool mmap, bool block)
 {
 #define	MAX_LEN_FNAME	32
 	char fname[MAX_LEN_FNAME];
 	bool keepFinding = true;
 	struct stat buff;
 
+	m_queryOnly = queryOnly;
 	if( 0<=m_fd ) {
 		printf("object in use !!!\n");
 		return false;
@@ -187,13 +190,14 @@ bool V4l2Base::initV4l2(int devIndex, unsigned int bufCount, bool mmap, bool blo
 
 	if( keepFinding )
 		return false;
-
-	if( !applyFormat() ) return false;
-	//m_fd valid
-	if( m_bufCount ) {
-		if( !reqBuf(m_bufCount) ) return false;        //fail to request buffer for mapping
-		if( !allocBuf() ) return false;
-	} else printf("no buffer allocated\n");
+	if( !m_queryOnly ) {
+		if( !applyFormat() ) return false;
+		//m_fd valid
+		if( m_bufCount ) {
+			if( !reqBuf(m_bufCount) ) return false;        //fail to request buffer for mapping
+			if( !allocBuf() ) return false;
+		} else printf("no buffer allocated\n");
+	}
 
 	return (m_fd>=0);
 }
@@ -411,13 +415,19 @@ void V4l2Base::setFrmRate(unsigned int num, unsigned int denom)
 }
 
 
-const char *V4l2Base::pixFormatGetName(unsigned int pixformat)
+/*
+ *  Out : index - if valid pointer, return index found
+ *                -1 means not found
+ */
+const char *V4l2Base::pixFormatGetName(unsigned int pixformat, unsigned int *index)
 {
 	const char *name = NULL;
 
+	if( index ) *index = -1;                        //not found
 	for( int i=0; i<SIZE_ARRAY(g_format_vn); ++i ) {
 		if( g_format_vn[i].val==pixformat ) {
 			name = g_format_vn[i].name;
+			if( index ) *index = i;
 			break;
 		}
 	}
@@ -437,6 +447,7 @@ void V4l2Base::checkVideoFormat()
 {
 	struct v4l2_fmtdesc format;
 	const char *formatName;
+	unsigned int fmtIndex;
 
 	printf("Source supplies the following formats:\n");
 
@@ -446,10 +457,12 @@ void V4l2Base::checkVideoFormat()
 		format.index = indx;
 
 		if( 0==ioctl(m_fd, VIDIOC_ENUM_FMT, &format) ) {
-			formatName = pixFormatGetName(format.pixelformat);
+			formatName = pixFormatGetName(format.pixelformat, &fmtIndex);
 			if( formatName ) {
-				printf("\t%s support\n", formatName);
+				printf("\t%s (%d) support\n", formatName, fmtIndex);
 				m_supportFormat[indx] = format.pixelformat;
+				if( m_queryOnly )
+					enumFrameSz(format.pixelformat);
 			} else printf("\tunknow format 0x%08u\n", format.pixelformat);
 		} else return;
 	}
@@ -606,4 +619,43 @@ bool V4l2Base::putBuffer(V4l2BaseBuffer *buffer, bool checkStreaming)
 		}
 	}
 	return result;
+}
+
+bool V4l2Base::enumFrameSz(unsigned int pixfmt)
+{
+	int ret;
+	struct v4l2_frmsizeenum fsize;
+	
+	if( m_fd<0 )
+		return false;
+	memset(&fsize, 0, sizeof(fsize));
+	fsize.index = 0;
+	fsize.pixel_format = pixfmt;
+	while ((ret = ioctl(m_fd, VIDIOC_ENUM_FRAMESIZES, &fsize)) == 0) {
+		if (fsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+			printf("\t\t{ discrete: %ux%u }\n",	fsize.discrete.width, fsize.discrete.height);
+#if 0
+			ret = enum_frame_intervals(m_fd, pixfmt, fsize.discrete.width, fsize.discrete.height);
+			if (ret != 0)
+				printf("  Unable to enumerate frame sizes.\n");
+#endif
+		} else if (fsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) {
+			printf("\t\t{ continuous: (%ux%u) .. (%ux%u)}\n",
+				fsize.stepwise.min_width, fsize.stepwise.min_height,
+				fsize.stepwise.max_width, fsize.stepwise.max_height);
+			//printf("  Refusing to enumerate frame intervals.\n");
+			break;
+		} else if (fsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
+			printf("\t\t{ stepwise: min (%ux%u) .. (%ux%u) /stepsize (%u, %u)}\n",
+				fsize.stepwise.min_width, fsize.stepwise.min_height,
+				fsize.stepwise.max_width, fsize.stepwise.max_height,
+				fsize.stepwise.step_width, fsize.stepwise.step_height);
+			//printf("  Refusing to enumerate frame intervals.\n");
+			break;
+		}
+		fsize.index++;
+	}
+	if( 0==fsize.index && ret<0 )
+		return false;
+	return true;
 }

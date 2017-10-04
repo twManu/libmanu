@@ -59,6 +59,7 @@ protected:
 	int                            m_devIndex;
 	int                            m_bufCount;
 	bool                           m_blockIO;
+	bool                           m_queryOnly;
 	/* !@brief alloc and map ... bad, the are separate */
 	bool                           m_mmap;
 	bool                           m_streaming;
@@ -86,7 +87,7 @@ public:
 	 *                so this flag directly reflect to file open. That is, getBuffer will be
 	 *                blocked if true. False otherwise.
 	 */
-	virtual bool initV4l2(int devIndex, unsigned int bufCount=0, bool mmap=true, bool block=true);
+	virtual bool initV4l2(int devIndex, bool queryOnly, unsigned int bufCount=0, bool mmap=true, bool block=true);
 	/* !@details
 	 * remember format set apply when init
 	 * @param pixelformat - v4l2_fourcc encoded pixelformat
@@ -96,11 +97,12 @@ public:
 	void getFormat(unsigned int *w, unsigned int *h, unsigned int *pixelformat);
 	//!@brief report V4L2_PIX_FMT_XXX in fmtArray and the size, 0 means none
 	int  enumFormat(unsigned int **fmtArray);
-	const char *pixFormatGetName(unsigned int pixformat);
+	const char *pixFormatGetName(unsigned int pixformat, unsigned int *fmtIndex=NULL);
 	//!@brief set frame rate, if no parameter, use what is got from device
 	void setFrmRate(unsigned int num=0, unsigned int denom=0);
 	//!@brief from 0 to max_support_format index
 	unsigned int enumV4L2Format(int index);
+	bool enumFrameSz(unsigned int pixfmt);
 
 	/*!@detail 
 	 * streaming on or off, return true if success
