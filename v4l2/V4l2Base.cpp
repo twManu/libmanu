@@ -367,6 +367,18 @@ static val_name_t g_format_vn[] = {
 };
 
 
+static val_name_t g_ioctl_vn[] = {
+	  DEF_VAL_NAME(VIDIOC_QUERYBUF)
+	, DEF_VAL_NAME(VIDIOC_REQBUFS)
+	, DEF_VAL_NAME(VIDIOC_QUERYCAP)
+	, DEF_VAL_NAME(VIDIOC_G_PARM)
+	, DEF_VAL_NAME(VIDIOC_S_PARM)
+	, DEF_VAL_NAME(VIDIOC_ENUM_FMT)
+	, DEF_VAL_NAME(VIDIOC_S_FMT)
+	, DEF_VAL_NAME(VIDIOC_ENUM_FRAMESIZES)
+};
+
+
 V4l2Base::V4l2Base(unsigned int indexFormat)
 	: m_fd(-1)
 	, m_streaming(false)
@@ -388,6 +400,21 @@ void V4l2Base::printCapability()
 		if( m_capability.capabilities & g_capability_vn[i].val )
 			printf("\t%s support\n", g_capability_vn[i].name);
 	}
+}
+
+
+void V4l2Base::printRaw()
+{
+	int i;
+	PRINT_VAL_NAME(g_ioctl_vn);
+	for( i=0; i<SIZE_ARRAY(g_ioctl_vn); ++i)
+		printf("\t, '%s': %s\n", g_ioctl_vn[i].name, g_ioctl_vn[i].name);
+	PRINT_VAL_NAME(g_format_vn);
+	for( i=0; i<SIZE_ARRAY(g_format_vn); ++i)
+		printf("\t, '%s': %s\n", g_format_vn[i].name, g_format_vn[i].name);
+	PRINT_VAL_NAME(g_capability_vn);
+	for( i=0; i<SIZE_ARRAY(g_capability_vn); ++i)
+		printf("\t, '%s': %s\n", g_capability_vn[i].name, g_capability_vn[i].name);
 }
 
 

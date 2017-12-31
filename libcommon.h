@@ -18,6 +18,14 @@ const	char                 *name;
 
 #define	DEF_VAL_NAME(val)	{(unsigned int)val, #val}
 #define SIZE_ARRAY(arr)	((int)(sizeof(arr)/sizeof((arr)[0])))
+#define PRINT_VAL_NAME(obj)                                \
+	do {                                               \
+		for(int i=0; i<SIZE_ARRAY(obj); ++i)       \
+			printf("%s = 0x%08x\n",            \
+				obj[i].name,               \
+				obj[i].val);               \
+	} while( 0 )
+
 
 /*! @details
   Get bit field from network byte 'data'.

@@ -101,7 +101,10 @@ int main(int argc, char **argv)
 	v4l2.setFormat(g_width, g_height,
 		g_format<0 ? V4L2_PIX_FMT_YUYV : v4l2.enumV4L2Format(g_format));
 	if( !v4l2.initV4l2(g_devNr, g_query, BUF_COUNT, g_mmap) ) return -1;
-	if( g_query ) return 0;
+	if( g_query ) {
+		v4l2.printRaw();
+		return 0;
+	}
 	if( g_savefile ) {
 		dump = new FileDump(g_savefile, FileStream::BM_WRONLY, g_cap_count);
 		if( dump ) {

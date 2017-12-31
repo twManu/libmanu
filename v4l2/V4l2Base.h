@@ -122,6 +122,10 @@ public:
 	 * @retrun true - if successful queued.
 	 */
 	virtual bool putBuffer(V4l2BaseBuffer *buffer, bool checkStreaming=true);
+	/* !@brief
+	 *  print v4l2 definitions
+	 */
+	void printRaw();
 };
 
 #endif	//__V4L2_BASE_H__
