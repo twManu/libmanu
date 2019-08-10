@@ -1,5 +1,5 @@
 TARGET=y4mTest
-CFLAGS=-Wall -O2 -I../
+CFLAGS=-Wall -O2 -I../ -DDEF_DEBUG -DIF_LINUX_TYPE_DEBUG=1
 LDFLAGS=-lpthread
 LIBMANU=..
 

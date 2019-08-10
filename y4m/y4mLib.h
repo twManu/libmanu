@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define dbg(level, format, args...)       \
+	do {                                  \
+		if( m_debugLevel>=level ) {       \
+			printf(format, ##args);       \
+			fflush(stdout);               \
+		}                                 \
+	} while( 0 )
+
 typedef enum enum_y4m_format {
 	  eY4M_C420JPEG = 1
 	, eY4M_C420PALDV
@@ -30,8 +38,15 @@ typedef enum enum_y4m_state {
 class cY4M
 {
 public:
-	cY4M();
+	cY4M(int level=0);
 	~cY4M();
+	/*
+	 * Get header and parameter
+	 * In  : inFile - input file name
+	 * Out : param
+	 * Ret : true - successful and param valid
+	 *       false - failure
+	 */
 	bool init(char *inFile, struct_y4m_param &param);
 	//return 1 based frame #, if outFrame provided, data copied
 	int getFrame(char *outFrame);
@@ -40,6 +55,7 @@ protected:
 	struct_y4m_param            m_param;
 	int                         m_frm_nr;
 	char                        *m_buf;
+	int                         m_debugLevel;
 };
 
 
