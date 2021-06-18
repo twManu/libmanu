@@ -19,7 +19,7 @@
 # created to the list.
 
 
-TESTS += testCgetchar unittest
+TESTS += testCgetchar unittest macroTest
 INC_DIR = ../
 GTEST_DIR = /usr/src/gtest
 
@@ -56,3 +56,7 @@ unittest : $(USER_OBJ)
 testCgetchar: testCgetchar.c
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
 	
+macroTest: macroTest.cpp
+	$(CXX) -E -o macroTest.i $^
+	indent -kr macroTest.i
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
